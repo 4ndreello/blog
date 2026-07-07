@@ -1,0 +1,30 @@
+---
+interface Props { slug: string }
+const { slug } = Astro.props;
+const apiUrl = import.meta.env.PUBLIC_API_URL;
+---
+<span class="view-count" data-slug={slug} data-api={apiUrl} hidden></span>
+
+<script>
+  document.querySelectorAll<HTMLElement>(".view-count").forEach(async (el) => {
+    const slug = el.dataset.slug;
+    const api = el.dataset.api;
+    if (!slug || !api) return;
+    try {
+      const res = await fetch(`${api}/views/${slug}`, { method: "POST" });
+      if (!res.ok) return;
+      const { count } = await res.json();
+      el.textContent = `${count} ${count === 1 ? "view" : "views"}`;
+      el.hidden = false;
+    } catch {
+      // non-critical: stay hidden
+    }
+  });
+</script>
+
+<style>
+  .view-count {
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #888);
+  }
+</style>
