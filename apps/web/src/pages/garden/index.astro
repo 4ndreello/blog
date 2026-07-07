@@ -1,0 +1,83 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import GardenCard from '../../components/GardenCard.astro';
+
+const posts = await getCollection('garden');
+posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+---
+
+<Layout title="Garden — Notas e Ideias">
+  <main class="container">
+    <header class="page-header">
+      <h1 class="page-title">Garden</h1>
+      <p class="page-description">
+        Um espaço em constante evolução com anotações sobre engenharia, infraestrutura e aprendizado contínuo.
+      </p>
+    </header>
+
+    <div class="section-label"><b>##</b> notas</div>
+    <section class="post-list" aria-label="Lista de notas">
+      {posts.map((post) => (
+        <GardenCard post={post} />
+      ))}
+    </section>
+
+    <footer class="page-footer">{posts.length} notas</footer>
+  </main>
+</Layout>
+
+<style>
+  .container {
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: 6.5rem var(--space-4) var(--space-16);
+  }
+
+  .page-header {
+    margin-bottom: var(--space-10);
+  }
+
+  .page-title {
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1.2;
+    margin-bottom: var(--space-3);
+    color: var(--color-text);
+  }
+
+  .page-description {
+    font-size: 1.0625rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    max-width: 36rem;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-3);
+  }
+
+  .section-label b {
+    color: var(--color-text);
+    font-weight: 600;
+  }
+
+  .post-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .post-list > :global(.entry:last-child) {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .page-footer {
+    margin-top: var(--space-8);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+  }
+</style>

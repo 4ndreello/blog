@@ -1,0 +1,28 @@
+---
+export interface Props {
+  tags: string[];
+}
+
+const { tags } = Astro.props;
+---
+
+{tags.length > 0 && (
+  <div class="tag-list">
+    {tags.map((tag) => (
+      <span class="tag">{tag}</span>
+    ))}
+  </div>
+)}
+
+<style>
+  .tag-list {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-top: var(--space-2);
+  }
+
+  .tag:not(:last-child)::after {
+    content: ', ';
+  }
+</style>

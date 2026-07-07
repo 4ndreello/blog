@@ -1,0 +1,155 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Andreello — Digital Garden">
+  <main class="container">
+    <header class="hero">
+      <div class="name">andreello</div>
+      <h1 class="hero-title">
+        Notas de engenharia e infraestrutura, crescendo{' '}
+        <span class="highlight"
+          >fora de ordem<span class="ink" aria-hidden="true">fora de ordem</span></span
+        >.
+      </h1>
+      <p class="hero-subtitle">Engenheiro de software & entusiasta de infraestrutura.</p>
+    </header>
+
+    <section class="intro">
+      <p>
+        Este é meu <em>digital garden</em>: um espaço vivo onde anotações sobre engenharia,
+        infraestrutura e aprendizado crescem de forma orgânica. Algumas notas são sementes —
+        ideias ainda em germinação. Outras são plantas maduras, revisitadas e podadas com o tempo.
+      </p>
+      <p>
+        Aqui não há cronologia rígida. Há conexões. Cada nota aponta para outras, formando uma teia
+        de conhecimento que reflete como realmente aprendemos: de forma associativa, não linear.
+      </p>
+    </section>
+
+    <nav class="actions">
+      <a href="/garden/" class="primary-action">explorar o garden →</a>
+    </nav>
+  </main>
+</Layout>
+
+<style>
+  .container {
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: 6.5rem var(--space-4) var(--space-16);
+  }
+
+  .hero {
+    margin-bottom: var(--space-8);
+  }
+
+  .name {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-6);
+  }
+
+  .hero-title {
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    margin-bottom: var(--space-4);
+    color: var(--color-text);
+    text-wrap: balance;
+  }
+
+  .highlight {
+    position: relative;
+    display: inline-block;
+    font-style: italic;
+    color: var(--color-text);
+  }
+
+  .highlight::before {
+    content: '';
+    position: absolute;
+    top: -0.05em;
+    bottom: -0.1em;
+    left: -0.1em;
+    z-index: 0;
+    background: var(--color-highlight);
+    border-radius: 1px 6px 3px 5px / 4px 3px 6px 2px;
+    clip-path: polygon(0% 12%, 96% 0%, 100% 82%, 3% 100%);
+    transform: rotate(-1deg);
+    width: 0;
+    animation: paint 0.45s ease-out 0.4s forwards;
+  }
+
+  .highlight .ink {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    color: var(--color-highlight-ink);
+    white-space: nowrap;
+    clip-path: inset(0 100% 0 0);
+    animation: reveal 0.45s ease-out 0.4s forwards;
+  }
+
+  @keyframes paint {
+    to {
+      width: 106%;
+    }
+  }
+
+  @keyframes reveal {
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .highlight::before {
+      animation: none;
+      width: 106%;
+    }
+    .highlight .ink {
+      animation: none;
+      clip-path: inset(0 0 0 0);
+    }
+  }
+
+  .hero-subtitle {
+    font-size: 1.0625rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+
+  .intro {
+    margin-bottom: var(--space-8);
+  }
+
+  .intro p {
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    margin-bottom: var(--space-4);
+    color: var(--color-text);
+  }
+
+  .intro em {
+    font-style: italic;
+  }
+
+  .actions {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+
+  .primary-action {
+    color: var(--color-text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .primary-action:hover {
+    border-color: var(--color-text);
+    text-decoration: none;
+  }
+</style>

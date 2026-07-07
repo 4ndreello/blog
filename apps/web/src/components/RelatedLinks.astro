@@ -1,0 +1,59 @@
+---
+export interface Props {
+  links: { title: string; url: string }[];
+}
+
+const { links } = Astro.props;
+---
+
+{links.length > 0 && (
+  <nav class="related-links" aria-label="Links relacionados">
+    <h2 class="related-title">## links relacionados</h2>
+    <ul class="related-list" role="list">
+      {links.map((link) => (
+        <li>
+          <a href={link.url} target="_blank" rel="noopener noreferrer" class="related-link">
+            {link.title} →
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
+
+<style>
+  .related-links {
+    margin-top: var(--space-10);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .related-title {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-4);
+  }
+
+  .related-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .related-link {
+    font-size: 0.9375rem;
+    color: var(--color-text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .related-link:hover {
+    border-color: var(--color-text);
+    text-decoration: none;
+  }
+</style>
