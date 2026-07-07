@@ -38,6 +38,15 @@ All commands are run from the root of the project, from a terminal:
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
 
+## 🚀 Deploy
+
+This project is configured for static output. To build and deploy to GCP (Cloud Storage + Cloud Load Balancer + Cloud CDN), see [docs/DEPLOY.md](docs/DEPLOY.md). You can also run the helper script after building:
+
+```bash
+npm run build
+./gcp-deploy.sh
+```
+
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).

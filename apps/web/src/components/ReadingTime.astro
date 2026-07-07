@@ -1,0 +1,19 @@
+---
+export interface Props {
+  words: number;
+}
+
+const { words } = Astro.props;
+const minutes = Math.max(1, Math.round(words / 200));
+---
+
+<span class="reading-time">{minutes} minutos de leitura</span>
+
+<style>
+  .reading-time {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+</style>
