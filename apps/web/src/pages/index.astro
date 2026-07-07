@@ -5,7 +5,8 @@ import Layout from '../layouts/Layout.astro';
 <Layout title="Andreello — Digital Garden">
   <main class="container">
     <header class="hero">
-      <div class="name">andreello</div>
+      <div class="name" aria-label="andreello"><span class="typed" aria-hidden="true"
+          >andreello</span><span class="cursor" aria-hidden="true"></span></div>
       <h1 class="hero-title">
         Notas de engenharia e infraestrutura, crescendo{' '}
         <span class="highlight"
@@ -49,6 +50,68 @@ import Layout from '../layouts/Layout.astro';
     font-size: 0.8125rem;
     color: var(--color-text-secondary);
     margin-bottom: var(--space-6);
+    display: inline-flex;
+    align-items: baseline;
+    line-height: 1;
+  }
+
+  /* typewriter: reveals one char per step, mono font so 1 glyph = 1ch */
+  .typed {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    vertical-align: bottom;
+    width: 9ch;
+    animation: typeloop 4.2s infinite 0.2s;
+  }
+
+  /* solid block cursor, matches the a_ favicon mark */
+  .cursor {
+    display: inline-block;
+    width: 0.6ch;
+    height: 1em;
+    margin-left: 2px;
+    background: var(--color-text-secondary);
+    animation: blink 1.05s steps(1) infinite;
+  }
+
+  /* type in (steps), hold, erase (steps), hold, repeat */
+  @keyframes typeloop {
+    0% {
+      width: 0;
+      animation-timing-function: steps(9);
+    }
+    33% {
+      width: 9ch;
+      animation-timing-function: linear;
+    }
+    57% {
+      width: 9ch;
+      animation-timing-function: steps(9);
+    }
+    83% {
+      width: 0;
+      animation-timing-function: linear;
+    }
+    100% {
+      width: 0;
+    }
+  }
+
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .typed {
+      animation: none;
+      width: 9ch;
+    }
+    .cursor {
+      animation: none;
+    }
   }
 
   .hero-title {
