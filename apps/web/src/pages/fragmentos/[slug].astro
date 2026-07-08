@@ -6,6 +6,7 @@ import ReadingTime from '../../components/ReadingTime.astro';
 import TagList from '../../components/TagList.astro';
 import RelatedLinks from '../../components/RelatedLinks.astro';
 import ViewCount from '../../components/ViewCount.astro';
+import SvgZoom from '../../components/SvgZoom.astro';
 
 export const getStaticPaths = (async () => {
   const posts = await getCollection('garden');
@@ -64,6 +65,8 @@ const updatedDateFormatted = updatedDate
       <div class="post-body prose">
         <Content />
       </div>
+
+      <SvgZoom />
 
       <RelatedLinks links={related} />
     </article>

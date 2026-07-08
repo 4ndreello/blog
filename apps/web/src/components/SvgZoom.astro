@@ -1,0 +1,377 @@
+---
+// lightweight svg zoom/pan overlay for inline diagrams inside .prose
+---
+
+<script>
+  (function () {
+    const proseSelector = ".prose";
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // state per open overlay
+    let overlay: HTMLDivElement | null = null;
+    let stage: HTMLDivElement | null = null;
+    let svgClone: SVGSVGElement | null = null;
+    let scale = 1;
+    let translateX = 0;
+    let translateY = 0;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let initialTranslateX = 0;
+    let initialTranslateY = 0;
+
+    const MIN_SCALE = 1;
+    const MAX_SCALE = 6;
+
+    function applyTransform() {
+      if (!svgClone) return;
+      svgClone.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    }
+
+    function setStageCursor() {
+      if (!stage) return;
+      stage.style.cursor = scale > MIN_SCALE ? (isDragging ? "grabbing" : "grab") : "default";
+    }
+
+    function resetTransform() {
+      scale = 1;
+      translateX = 0;
+      translateY = 0;
+      applyTransform();
+      setStageCursor();
+    }
+
+    function zoom(delta: number, centerX: number, centerY: number) {
+      if (!svgClone || !stage) return;
+
+      const rect = svgClone.getBoundingClientRect();
+      const originX = centerX - rect.left;
+      const originY = centerY - rect.top;
+
+      const previousScale = scale;
+      scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale + delta));
+      if (scale === previousScale) return;
+
+      const scaleRatio = scale / previousScale;
+      translateX = originX - (originX - translateX) * scaleRatio;
+      translateY = originY - (originY - translateY) * scaleRatio;
+
+      // snap back to center when returning to base scale
+      if (scale <= MIN_SCALE) {
+        translateX = 0;
+        translateY = 0;
+      }
+
+      applyTransform();
+      setStageCursor();
+    }
+
+    function closeOverlay() {
+      if (!overlay) return;
+      overlay.remove();
+      overlay = null;
+      stage = null;
+      svgClone = null;
+      document.body.style.overflow = "";
+    }
+
+    function createOverlay(originalSvg: SVGSVGElement) {
+      const ariaLabel = originalSvg.getAttribute("aria-label") || "diagrama ampliado";
+
+      overlay = document.createElement("div");
+      overlay.className = "svg-zoom-overlay";
+      overlay.setAttribute("role", "dialog");
+      overlay.setAttribute("aria-modal", "true");
+      overlay.setAttribute("aria-label", ariaLabel);
+      overlay.tabIndex = -1;
+
+      const backdrop = document.createElement("div");
+      backdrop.className = "svg-zoom-backdrop";
+
+      const controls = document.createElement("div");
+      controls.className = "svg-zoom-controls";
+      controls.innerHTML = `
+        <button type="button" class="svg-zoom-btn" data-action="zoom-out" aria-label="diminuir zoom">−</button>
+        <span class="svg-zoom-scale" aria-live="polite">100%</span>
+        <button type="button" class="svg-zoom-btn" data-action="zoom-in" aria-label="aumentar zoom">+</button>
+        <button type="button" class="svg-zoom-btn" data-action="reset" aria-label="resetar zoom">↺</button>
+        <button type="button" class="svg-zoom-btn" data-action="close" aria-label="fechar">×</button>
+      `;
+
+      stage = document.createElement("div");
+      stage.className = "svg-zoom-stage";
+
+      svgClone = originalSvg.cloneNode(true) as SVGSVGElement;
+      svgClone.classList.add("svg-zoom-svg");
+      svgClone.removeAttribute("width");
+      svgClone.removeAttribute("height");
+      svgClone.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+      stage.appendChild(svgClone);
+      overlay.appendChild(backdrop);
+      overlay.appendChild(stage);
+      overlay.appendChild(controls);
+      document.body.appendChild(overlay);
+      document.body.style.overflow = "hidden";
+
+      resetTransform();
+      overlay.focus();
+      updateScaleLabel();
+    }
+
+    function updateScaleLabel() {
+      if (!overlay) return;
+      const label = overlay.querySelector<HTMLElement>(".svg-zoom-scale");
+      if (label) label.textContent = `${Math.round(scale * 100)}%`;
+    }
+
+    function onWheel(event: WheelEvent) {
+      if (!overlay || !svgClone) return;
+      event.preventDefault();
+      const delta = event.deltaY > 0 ? -0.2 : 0.2;
+      zoom(delta, event.clientX, event.clientY);
+      updateScaleLabel();
+    }
+
+    function onPointerDown(event: PointerEvent) {
+      if (!stage || !svgClone || scale <= MIN_SCALE) return;
+      isDragging = true;
+      dragStartX = event.clientX;
+      dragStartY = event.clientY;
+      initialTranslateX = translateX;
+      initialTranslateY = translateY;
+      setStageCursor();
+      stage.setPointerCapture(event.pointerId);
+    }
+
+    function onPointerMove(event: PointerEvent) {
+      if (!isDragging || !stage) return;
+      event.preventDefault();
+      translateX = initialTranslateX + (event.clientX - dragStartX);
+      translateY = initialTranslateY + (event.clientY - dragStartY);
+      applyTransform();
+    }
+
+    function onPointerUp(event: PointerEvent) {
+      if (!isDragging || !stage) return;
+      isDragging = false;
+      stage.releasePointerCapture(event.pointerId);
+      setStageCursor();
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (!overlay) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeOverlay();
+        return;
+      }
+      const rect = overlay.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      if (event.key === "+" || event.key === "=") {
+        event.preventDefault();
+        zoom(0.4, centerX, centerY);
+        updateScaleLabel();
+      } else if (event.key === "-" || event.key === "_") {
+        event.preventDefault();
+        zoom(-0.4, centerX, centerY);
+        updateScaleLabel();
+      } else if (event.key === "0") {
+        event.preventDefault();
+        resetTransform();
+        updateScaleLabel();
+      }
+    }
+
+    function onControlClick(event: MouseEvent) {
+      const btn = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-action]");
+      if (!btn || !overlay || !svgClone) return;
+      const action = btn.dataset.action;
+      const rect = overlay.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      if (action === "zoom-in") {
+        zoom(0.5, centerX, centerY);
+      } else if (action === "zoom-out") {
+        zoom(-0.5, centerX, centerY);
+      } else if (action === "reset") {
+        resetTransform();
+      } else if (action === "close") {
+        closeOverlay();
+      }
+      updateScaleLabel();
+    }
+
+    function delegateProseClick(event: MouseEvent) {
+      const target = event.target as HTMLElement;
+      const svg = target.closest<SVGSVGElement>("svg");
+      if (!svg || !svg.closest(proseSelector)) return;
+      if (svg.closest(".svg-zoom-overlay")) return;
+      event.preventDefault();
+      createOverlay(svg);
+    }
+
+    function onOverlayPointerDown(event: PointerEvent) {
+      const target = event.target as HTMLElement;
+      if (target.closest(".svg-zoom-stage") || target.closest(".svg-zoom-controls")) return;
+      closeOverlay();
+    }
+
+    document.addEventListener("click", (event) => {
+      const target = event.target as HTMLElement;
+      if (target.closest(".svg-zoom-overlay")) {
+        onOverlayPointerDown(event as unknown as PointerEvent);
+      } else {
+        delegateProseClick(event);
+      }
+    });
+
+    document.addEventListener("keydown", onKeyDown);
+
+    document.addEventListener("wheel", (event) => {
+      if ((event.target as HTMLElement).closest(".svg-zoom-overlay")) {
+        onWheel(event as WheelEvent);
+      }
+    }, { passive: false });
+
+    document.addEventListener("pointerdown", (event) => {
+      if ((event.target as HTMLElement).closest(".svg-zoom-stage")) {
+        onPointerDown(event);
+      }
+    });
+
+    document.addEventListener("pointermove", (event) => {
+      if (isDragging) onPointerMove(event);
+    });
+
+    document.addEventListener("pointerup", (event) => {
+      if (isDragging) onPointerUp(event);
+    });
+
+    document.addEventListener("pointercancel", (event) => {
+      if (isDragging) onPointerUp(event);
+    });
+
+    document.addEventListener("click", (event) => {
+      const controls = (event.target as HTMLElement).closest(".svg-zoom-controls");
+      if (controls) onControlClick(event as MouseEvent);
+    });
+  })();
+</script>
+
+<style is:global>
+  .prose svg {
+    cursor: zoom-in;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: var(--space-6) 0;
+  }
+
+  .svg-zoom-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: var(--space-4);
+    background: rgb(10 10 9 / 0.96);
+  }
+
+  @media (prefers-color-scheme: light) {
+    .svg-zoom-overlay {
+      background: rgb(253 253 252 / 0.98);
+    }
+  }
+
+  .svg-zoom-backdrop {
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(4px);
+  }
+
+  .svg-zoom-stage {
+    position: relative;
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  .svg-zoom-svg {
+    max-width: min(100%, 56rem);
+    max-height: min(100%, 42rem);
+    width: 100%;
+    height: auto;
+    transform-origin: center center;
+    transition: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .svg-zoom-svg {
+      transition: transform 0.15s ease-out;
+    }
+  }
+
+  .svg-zoom-controls {
+    position: absolute;
+    bottom: var(--space-4);
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--color-text);
+  }
+
+  .svg-zoom-scale {
+    min-width: 3.5ch;
+    text-align: center;
+    user-select: none;
+  }
+
+  .svg-zoom-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .svg-zoom-btn:hover {
+    background: var(--color-border);
+  }
+
+  .svg-zoom-btn:focus-visible {
+    outline: 2px solid var(--color-highlight);
+    outline-offset: 2px;
+  }
+
+  .svg-zoom-btn[data-action="close"] {
+    margin-left: var(--space-2);
+    font-weight: 600;
+  }
+</style>
