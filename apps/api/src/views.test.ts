@@ -1,7 +1,9 @@
-import { expect, test, describe } from "bun:test";
+import { expect, test, describe, afterEach } from "bun:test";
 import { visitorHash, isValidSlug } from "./visitor";
 import { makeClient, applySchema } from "./db";
 import { getCount, recordView } from "./views";
+import { tmpdir } from "node:os";
+import { rmSync } from "node:fs";
 
 describe("isValidSlug", () => {
   test("accepts kebab slug", () => {
@@ -24,11 +26,26 @@ describe("visitorHash", () => {
   });
 });
 
+let lastDbPath: string | undefined;
+
 async function freshDb() {
-  const db = makeClient(":memory:");
+  const path = `${tmpdir()}/blog-views-test-${Date.now()}-${Math.random().toString(36).slice(2)}.db`;
+  lastDbPath = path;
+  const db = makeClient(`file:${path}`);
   await applySchema(db);
   return db;
 }
+
+afterEach(() => {
+  if (lastDbPath) {
+    try {
+      rmSync(lastDbPath);
+    } catch {
+      // ignore cleanup failures
+    }
+    lastDbPath = undefined;
+  }
+});
 
 describe("recordView / getCount", () => {
   test("first view increments to 1", async () => {

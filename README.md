@@ -32,7 +32,7 @@ Ele é um monorepo simples gerenciado com `pnpm`, com duas aplicações independ
 
 ## Como funciona a separação
 
-O site é 100% estático. Quando alguém abre uma nota, o componente `ViewCount` faz uma requisição do navegador para a API (`POST /views/:slug`) e exibe o número de visualizações. A API armazena o total no Turso (libSQL) e evita contar o mesmo visitante mais de uma vez por dia.
+O site é 100% estático. Quando alguém abre uma nota, o componente `ViewCount` faz uma requisição do navegador para a API (`POST /views/:slug`) e exibe o número de visualizações. A API armazena o total no Turso (libSQL) e conta cada visitante (IP + User-Agent) apenas uma vez por nota.
 
 A API roda em Cloud Run e o site fica hospedado no Cloudflare R2. O `ALLOWED_ORIGIN` da API precisa bater exatamente com a origem pública do site, senão o browser bloqueia por CORS.
 
@@ -78,4 +78,4 @@ Para deploy em produção, veja [`docs/DEPLOY.md`](docs/DEPLOY.md). Em resumo:
 
 - Site: `./deploy-web.sh` builda e sincroniza `apps/web/dist` com o bucket R2.
 - API: `gcloud run deploy` a partir de `apps/api`, usando o `Dockerfile`.
-- Banco: schema em `apps/api/schema.sql`, aplicado manualmente quando muda.
+- Banco: schema em `apps/api/schema.sql`, aplicado manualmente quando muda. Se o banco legado ainda tiver a coluna `day` em `view_events`, `apps/api/src/db.ts` executa `apps/api/migration.sql` automaticamente no boot para recriar a tabela e recalcular os totais.

@@ -16,16 +16,25 @@ export async function recordView(
   slug: string,
   visitor: string,
 ): Promise<number> {
-  const ins = await db.execute({
-    sql: "INSERT OR IGNORE INTO view_events (slug, visitor) VALUES (?, ?)",
-    args: [slug, visitor],
-  });
-  if (ins.rowsAffected > 0) {
-    await db.execute({
-      sql: `INSERT INTO views (slug, count) VALUES (?, 1)
-            ON CONFLICT(slug) DO UPDATE SET count = count + 1`,
-      args: [slug],
+  const tx = await db.transaction("write");
+  try {
+    const ins = await tx.execute({
+      sql: "INSERT OR IGNORE INTO view_events (slug, visitor) VALUES (?, ?)",
+      args: [slug, visitor],
     });
+    if (ins.rowsAffected > 0) {
+      await tx.execute({
+        sql: `INSERT INTO views (slug, count) VALUES (?, 1)
+              ON CONFLICT(slug) DO UPDATE SET count = count + 1`,
+        args: [slug],
+      });
+    }
+    await tx.commit();
+  } catch (e) {
+    await tx.rollback();
+    throw e;
+  } finally {
+    tx.close();
   }
   return getCount(db, slug);
 }
