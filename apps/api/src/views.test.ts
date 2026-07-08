@@ -1,7 +1,9 @@
-import { expect, test, describe } from "bun:test";
-import { visitorHash, isValidSlug, utcDay } from "./visitor";
+import { expect, test, describe, afterEach } from "bun:test";
+import { visitorHash, isValidSlug } from "./visitor";
 import { makeClient, applySchema } from "./db";
 import { getCount, recordView } from "./views";
+import { tmpdir } from "node:os";
+import { rmSync } from "node:fs";
 
 describe("isValidSlug", () => {
   test("accepts kebab slug", () => {
@@ -14,59 +16,73 @@ describe("isValidSlug", () => {
   });
 });
 
-describe("utcDay", () => {
-  test("formats YYYY-MM-DD in UTC", () => {
-    expect(utcDay(new Date("2026-07-07T23:30:00Z"))).toBe("2026-07-07");
-  });
-});
+const TEST_SECRET = "test-secret-pepper";
 
 describe("visitorHash", () => {
   test("is deterministic and hides raw ip", async () => {
-    const a = await visitorHash("1.2.3.4", "UA", "2026-07-07");
-    const b = await visitorHash("1.2.3.4", "UA", "2026-07-07");
+    const a = await visitorHash("1.2.3.4", "UA", TEST_SECRET);
+    const b = await visitorHash("1.2.3.4", "UA", TEST_SECRET);
     expect(a).toBe(b);
     expect(a).not.toContain("1.2.3.4");
-    expect(a).toHaveLength(64); // sha256 hex
+    expect(a).toHaveLength(64); // hmac-sha256 hex
   });
-  test("differs across day", async () => {
-    const a = await visitorHash("1.2.3.4", "UA", "2026-07-07");
-    const b = await visitorHash("1.2.3.4", "UA", "2026-07-08");
+
+  test("depends on the secret", async () => {
+    const a = await visitorHash("1.2.3.4", "UA", TEST_SECRET);
+    const b = await visitorHash("1.2.3.4", "UA", "different-secret");
     expect(a).not.toBe(b);
   });
 });
 
+let lastDbPath: string | undefined;
+
 async function freshDb() {
-  const db = makeClient(":memory:");
+  const path = `${tmpdir()}/blog-views-test-${Date.now()}-${Math.random().toString(36).slice(2)}.db`;
+  lastDbPath = path;
+  const db = makeClient(`file:${path}`);
   await applySchema(db);
   return db;
 }
 
+afterEach(() => {
+  if (lastDbPath) {
+    try {
+      rmSync(lastDbPath);
+    } catch {
+      // ignore cleanup failures
+    }
+    lastDbPath = undefined;
+  }
+});
+
 describe("recordView / getCount", () => {
   test("first view increments to 1", async () => {
     const db = await freshDb();
-    const n = await recordView(db, "note-a", "v1", "2026-07-07");
+    const n = await recordView(db, "note-a", "v1");
     expect(n).toBe(1);
     expect(await getCount(db, "note-a")).toBe(1);
   });
 
-  test("same visitor same day does not double count", async () => {
+  test("same visitor does not double count", async () => {
     const db = await freshDb();
-    await recordView(db, "note-a", "v1", "2026-07-07");
-    const n = await recordView(db, "note-a", "v1", "2026-07-07");
+    await recordView(db, "note-a", "v1");
+    const n = await recordView(db, "note-a", "v1");
     expect(n).toBe(1);
   });
 
-  test("same visitor next day counts again", async () => {
+  test("same visitor on a different slug counts separately", async () => {
     const db = await freshDb();
-    await recordView(db, "note-a", "v1", "2026-07-07");
-    const n = await recordView(db, "note-a", "v1", "2026-07-08");
-    expect(n).toBe(2);
+    await recordView(db, "note-a", "v1");
+    const n = await recordView(db, "note-b", "v1");
+    expect(n).toBe(1);
+    expect(await getCount(db, "note-a")).toBe(1);
+    expect(await getCount(db, "note-b")).toBe(1);
   });
 
   test("different visitors both count", async () => {
     const db = await freshDb();
-    await recordView(db, "note-a", "v1", "2026-07-07");
-    const n = await recordView(db, "note-a", "v2", "2026-07-07");
+    await recordView(db, "note-a", "v1");
+    const n = await recordView(db, "note-a", "v2");
     expect(n).toBe(2);
   });
 

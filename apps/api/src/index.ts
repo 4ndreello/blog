@@ -2,10 +2,15 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { makeClient, applySchema } from "./db";
 import { getCount, recordView } from "./views";
-import { visitorHash, isValidSlug, utcDay } from "./visitor";
+import { visitorHash, isValidSlug } from "./visitor";
 
 const db = makeClient(process.env.TURSO_URL!, process.env.TURSO_TOKEN);
 await applySchema(db);
+
+const visitorHashSecret = process.env.VISITOR_HASH_SECRET;
+if (!visitorHashSecret) {
+  throw new Error("VISITOR_HASH_SECRET is required");
+}
 
 const app = new Hono();
 
@@ -34,10 +39,9 @@ app.post("/views/:slug", async (c) => {
   if (!isValidSlug(slug)) return c.json({ error: "bad slug" }, 400);
   const ip = (c.req.header("x-forwarded-for") ?? "0.0.0.0").split(",")[0].trim();
   const ua = c.req.header("user-agent") ?? "";
-  const day = utcDay(new Date());
   try {
-    const visitor = await visitorHash(ip, ua, day);
-    return c.json({ slug, count: await recordView(db, slug, visitor, day) });
+    const visitor = await visitorHash(ip, ua, visitorHashSecret);
+    return c.json({ slug, count: await recordView(db, slug, visitor) });
   } catch {
     return c.json({ error: "unavailable" }, 503);
   }

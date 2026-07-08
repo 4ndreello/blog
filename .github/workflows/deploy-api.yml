@@ -23,6 +23,8 @@ jobs:
       - name: run tests
         run: bun test
         working-directory: apps/api
+        env:
+          VISITOR_HASH_SECRET: ${{ secrets.VISITOR_HASH_SECRET }}
 
   deploy:
     needs: test
@@ -45,7 +47,7 @@ jobs:
             --region us-east1 \
             --allow-unauthenticated \
             --set-env-vars "TURSO_URL=${TURSO_URL},ALLOWED_ORIGIN=${ALLOWED_ORIGIN}" \
-            --set-secrets "TURSO_TOKEN=turso-token:latest"
+            --set-secrets "TURSO_TOKEN=turso-token:latest,VISITOR_HASH_SECRET=visitor-hash-secret:latest"
         env:
           TURSO_URL: ${{ secrets.TURSO_URL }}
           ALLOWED_ORIGIN: ${{ secrets.ALLOWED_ORIGIN }}

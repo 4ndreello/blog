@@ -6,6 +6,5 @@ CREATE TABLE IF NOT EXISTS views (
 CREATE TABLE IF NOT EXISTS view_events (
   slug    TEXT NOT NULL,
   visitor TEXT NOT NULL,
-  day     TEXT NOT NULL,
-  PRIMARY KEY (slug, visitor, day)
+  PRIMARY KEY (slug, visitor)
 );
