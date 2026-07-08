@@ -16,13 +16,21 @@ describe("isValidSlug", () => {
   });
 });
 
+const TEST_SECRET = "test-secret-pepper";
+
 describe("visitorHash", () => {
   test("is deterministic and hides raw ip", async () => {
-    const a = await visitorHash("1.2.3.4", "UA");
-    const b = await visitorHash("1.2.3.4", "UA");
+    const a = await visitorHash("1.2.3.4", "UA", TEST_SECRET);
+    const b = await visitorHash("1.2.3.4", "UA", TEST_SECRET);
     expect(a).toBe(b);
     expect(a).not.toContain("1.2.3.4");
-    expect(a).toHaveLength(64); // sha256 hex
+    expect(a).toHaveLength(64); // hmac-sha256 hex
+  });
+
+  test("depends on the secret", async () => {
+    const a = await visitorHash("1.2.3.4", "UA", TEST_SECRET);
+    const b = await visitorHash("1.2.3.4", "UA", "different-secret");
+    expect(a).not.toBe(b);
   });
 });
 

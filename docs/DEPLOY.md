@@ -47,7 +47,7 @@ gcloud run deploy garden-api \
   --region us-east1 \
   --allow-unauthenticated \
   --set-env-vars "TURSO_URL=...,ALLOWED_ORIGIN=..." \
-  --set-secrets "TURSO_TOKEN=turso-token:latest"
+  --set-secrets "TURSO_TOKEN=turso-token:latest,VISITOR_HASH_SECRET=visitor-hash-secret:latest"
 ```
 
 Live URL: `https://garden-api-361874528796.us-east1.run.app`
@@ -78,6 +78,7 @@ Live URL: `https://garden-api-361874528796.us-east1.run.app`
 | api | `TURSO_URL` | `.env` / `--set-env-vars` | libSQL connection URL |
 | api | `TURSO_TOKEN` | GCP Secret Manager (`turso-token`) | injected via `--set-secrets`, never a plain env var |
 | api | `ALLOWED_ORIGIN` | `.env` / `--set-env-vars` | CORS origin allowed to call the API |
+| api | `VISITOR_HASH_SECRET` | GCP Secret Manager (`visitor-hash-secret`) | injected via `--set-secrets`; used to pepper visitor hashes |
 | web deploy | `R2_ACCOUNT_ID` | `.env` | Cloudflare account id, used to build the R2 endpoint |
 | web deploy | `R2_ACCESS_KEY_ID` | `.env` | R2 S3 API access key |
 | web deploy | `R2_SECRET_ACCESS_KEY` | `.env` | R2 S3 API secret key |

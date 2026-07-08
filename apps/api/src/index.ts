@@ -7,6 +7,11 @@ import { visitorHash, isValidSlug } from "./visitor";
 const db = makeClient(process.env.TURSO_URL!, process.env.TURSO_TOKEN);
 await applySchema(db);
 
+const visitorHashSecret = process.env.VISITOR_HASH_SECRET;
+if (!visitorHashSecret) {
+  throw new Error("VISITOR_HASH_SECRET is required");
+}
+
 const app = new Hono();
 
 app.use(
@@ -35,7 +40,7 @@ app.post("/views/:slug", async (c) => {
   const ip = (c.req.header("x-forwarded-for") ?? "0.0.0.0").split(",")[0].trim();
   const ua = c.req.header("user-agent") ?? "";
   try {
-    const visitor = await visitorHash(ip, ua);
+    const visitor = await visitorHash(ip, ua, visitorHashSecret);
     return c.json({ slug, count: await recordView(db, slug, visitor) });
   } catch {
     return c.json({ error: "unavailable" }, 503);

@@ -1,5 +1,10 @@
 BEGIN IMMEDIATE;
 
+-- legacy view_events rows were keyed by (slug, visitor, day); the same person
+-- on different days has different visitor hashes. raw ip/ua logs are not stored,
+-- so those hashes are copied as-is. permanent (slug, visitor) deduplication is
+-- effective only for new views after this migration runs.
+
 CREATE TABLE view_events_new (
   slug    TEXT NOT NULL,
   visitor TEXT NOT NULL,

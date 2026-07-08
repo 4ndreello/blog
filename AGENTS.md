@@ -48,9 +48,9 @@ Tests exist only for `apps/api` (bun's built-in runner, files `*.test.ts`). `app
 - Static output (`output: 'static'`).
 
 ### apps/api (view-counter service)
-- **Runtime is bun**, not node. Entry `src/index.ts` exports `{ port, fetch }` (hono app). Config via env: `TURSO_URL`, `TURSO_TOKEN`, `ALLOWED_ORIGIN`.
+- **Runtime is bun**, not node. Entry `src/index.ts` exports `{ port, fetch }` (hono app). Config via env: `TURSO_URL`, `TURSO_TOKEN`, `ALLOWED_ORIGIN`, `VISITOR_HASH_SECRET`.
 - **Endpoints**: `GET /views/:slug` (read count), `POST /views/:slug` (dedup-increment), `GET /health`. Contract: `{ slug, count }`.
-- **Dedup rule** (`src/views.ts`): a visitor counts at most once per slug forever. `recordView` runs inside a write transaction, does `INSERT OR IGNORE` into `view_events` (PK `slug,visitor`), and only when a new row lands does it bump `views.count` via `ON CONFLICT DO UPDATE`. `visitor` is `sha256(ip|ua)` (`src/visitor.ts`) — **raw IP is never stored**. If the legacy `view_events` table still has a `day` column, `applySchema` runs `migration.sql` at boot to rebuild the table and recount totals; because old visitor hashes included the day, pre-migration repeat visitors remain split by day.
+- **Dedup rule** (`src/views.ts`): a visitor counts at most once per slug forever. `recordView` runs inside a write transaction, does `INSERT OR IGNORE` into `view_events` (PK `slug,visitor`), and only when a new row lands does it bump `views.count` via `ON CONFLICT DO UPDATE`. `visitor` is `hmac-sha256(ip|ua)` using `VISITOR_HASH_SECRET` (`src/visitor.ts`) — **raw IP is never stored** and the secret makes the identifier resistant to offline enumeration. If the legacy `view_events` table still has a `day` column, `applySchema` runs `migration.sql` at boot to rebuild the table and recount totals; because old visitor hashes included the day, pre-migration repeat visitors remain split by day.
 - **Schema** (`schema.sql`) is the single source of truth: `db.ts` imports it as text (`import schema from "../schema.sql" with { type: "text" }`) and `applySchema` runs it idempotently at boot. Do not reintroduce a duplicate inline schema string.
 - Slug validation: `^[a-z0-9-]+$` only, no allowlist (unknown slugs can create rows — accepted tradeoff). DB errors degrade to `503`; the web counter hides silently on any failure.
 
