@@ -16,7 +16,6 @@ posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
       </p>
     </header>
 
-    <div class="section-label"><b>##</b> notas</div>
     <section class="post-list" aria-label="Lista de notas">
       {posts.map((post) => (
         <GardenCard post={post} />
@@ -51,18 +50,6 @@ posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
     color: var(--color-text-secondary);
     line-height: 1.5;
     max-width: 36rem;
-  }
-
-  .section-label {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--color-text-secondary);
-    margin-bottom: var(--space-3);
-  }
-
-  .section-label b {
-    color: var(--color-text);
-    font-weight: 600;
   }
 
   .post-list {
