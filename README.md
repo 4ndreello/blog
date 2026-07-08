@@ -1,53 +1,81 @@
-# Astro Starter Kit: Minimal
+# meu jardim digital
 
-```sh
-npm create astro@latest -- --template minimal
+Este repositório é o meu blog pessoal — um "digital garden" em português (pt-BR) onde publico notas sobre desenvolvimento, tecnologia e outras coisas que estou explorando.
+
+Ele é um monorepo simples gerenciado com `pnpm`, com duas aplicações independentes que conversam entre si:
+
+- **`apps/web`**: o site em si, feito com [Astro](https://astro.build/) e gerado como site estático.
+- **`apps/api`**: uma API pequena em [Bun](https://bun.sh/) + [Hono](https://hono.dev/) que conta visualizações de cada nota.
+
+## Estrutura
+
+```
+.
+├── apps/
+│   ├── web/          # site estático (Astro)
+│   │   ├── src/
+│   │   │   ├── content/garden/   # notas em markdown
+│   │   │   ├── pages/            # rotas do Astro
+│   │   │   ├── layouts/          # layout compartilhado
+│   │   │   └── components/       # componentes Astro
+│   │   └── public/               # assets estáticos
+│   └── api/          # contador de views (Bun + Hono + Turso)
+│       ├── src/
+│       ├── schema.sql
+│       └── Dockerfile
+├── docs/
+│   └── DEPLOY.md     # instruções completas de deploy
+├── deploy-web.sh     # script que sobe o site para o Cloudflare R2
+├── package.json      # scripts do workspace
+└── pnpm-workspace.yaml
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Como funciona a separação
 
-## 🚀 Project Structure
+O site é 100% estático. Quando alguém abre uma nota, o componente `ViewCount` faz uma requisição do navegador para a API (`POST /views/:slug`) e exibe o número de visualizações. A API armazena o total no Turso (libSQL) e evita contar o mesmo visitante mais de uma vez por dia.
 
-Inside of your Astro project, you'll see the following folders and files:
+A API roda em Cloud Run e o site fica hospedado no Cloudflare R2. O `ALLOWED_ORIGIN` da API precisa bater exatamente com a origem pública do site, senão o browser bloqueia por CORS.
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+## Comandos
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 🚀 Deploy
-
-This project is configured for static output. To build and deploy to GCP (Cloud Storage + Cloud Load Balancer + Cloud CDN), see [docs/DEPLOY.md](docs/DEPLOY.md). You can also run the helper script after building:
+Instala as dependências de tudo:
 
 ```bash
-npm run build
-./gcp-deploy.sh
+pnpm install
 ```
 
-## 👀 Want to learn more?
+Rodar localmente:
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
-# blog
+```bash
+# site Astro em http://localhost:4321
+pnpm run dev:web
+
+# API Bun com hot reload em http://localhost:3000
+pnpm run dev:api
+```
+
+Build e testes:
+
+```bash
+pnpm run build:web        # gera apps/web/dist/
+pnpm run test:api         # roda os testes da API com bun test
+```
+
+## Variáveis de ambiente
+
+As credenciais ficam no `.env` na raiz (já está no `.gitignore`). O arquivo `.env.example` lista todas as variáveis esperadas sem valores reais. Nunca commita secrets.
+
+As principais:
+
+- `PUBLIC_API_URL`: URL pública da API que o site chama no cliente.
+- `TURSO_URL` / `TURSO_TOKEN`: conexão com o banco libSQL da Turso.
+- `ALLOWED_ORIGIN`: origem do site, usada no CORS da API.
+- `R2_*`: credenciais do Cloudflare R2 para o deploy do site.
+
+## Deploy
+
+Para deploy em produção, veja [`docs/DEPLOY.md`](docs/DEPLOY.md). Em resumo:
+
+- Site: `./deploy-web.sh` builda e sincroniza `apps/web/dist` com o bucket R2.
+- API: `gcloud run deploy` a partir de `apps/api`, usando o `Dockerfile`.
+- Banco: schema em `apps/api/schema.sql`, aplicado manualmente quando muda.
