@@ -3,28 +3,72 @@ interface Props { slug: string }
 const { slug } = Astro.props;
 const apiUrl = import.meta.env.PUBLIC_API_URL;
 ---
-<span class="view-count" data-slug={slug} data-api={apiUrl} hidden></span>
+<span class="view-count" data-slug={slug} data-api={apiUrl}>
+  <span class="meta-separator">·</span>
+  <span class="view-count-value"><span class="view-count-skeleton" aria-hidden="true"></span></span>
+</span>
 
 <script>
   document.querySelectorAll<HTMLElement>(".view-count").forEach(async (el) => {
     const slug = el.dataset.slug;
     const api = el.dataset.api;
-    if (!slug || !api) return;
+    const value = el.querySelector<HTMLElement>(".view-count-value");
+    if (!slug || !api || !value) return;
     try {
       const res = await fetch(`${api}/views/${slug}`, { method: "POST" });
-      if (!res.ok) return;
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const { count } = await res.json();
-      el.textContent = `${count} ${count === 1 ? "view" : "views"}`;
-      el.hidden = false;
+      value.textContent = `${count} ${count === 1 ? "view" : "views"}`;
+      el.classList.add("is-loaded");
     } catch {
-      // non-critical: stay hidden
+      // non-critical: hide but keep the box so the meta line never reflows
+      el.classList.add("is-error");
     }
   });
 </script>
 
 <style>
   .view-count {
-    font-size: 0.85rem;
-    color: var(--color-text-muted, #888);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+  }
+  /* keep the box (space reserved) but invisible if the count never arrives */
+  .view-count.is-error {
+    visibility: hidden;
+  }
+  .view-count .meta-separator {
+    opacity: 0.5;
+  }
+
+  /* shimmer placeholder while the count loads */
+  .view-count-skeleton {
+    display: inline-block;
+    width: 3.5em;
+    height: 0.75em;
+    border-radius: var(--radius-sm, 3px);
+    background: linear-gradient(
+      90deg,
+      var(--color-border, #333) 25%,
+      var(--color-text-muted, #666) 50%,
+      var(--color-border, #333) 75%
+    );
+    background-size: 200% 100%;
+    animation: view-count-shimmer 1.2s ease-in-out infinite;
+    opacity: 0.4;
+  }
+  .view-count.is-loaded .view-count-skeleton {
+    display: none;
+  }
+
+  @keyframes view-count-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .view-count-skeleton { animation: none; }
   }
 </style>

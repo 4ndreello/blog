@@ -17,7 +17,10 @@ const app = new Hono();
 app.use(
   "*",
   cors({
-    origin: process.env.ALLOWED_ORIGIN ?? "*",
+    // comma-separated list so local dev origins can coexist with prod
+    origin: process.env.ALLOWED_ORIGIN
+      ? process.env.ALLOWED_ORIGIN.split(",").map((o) => o.trim())
+      : "*",
     allowMethods: ["GET", "POST"],
   }),
 );
