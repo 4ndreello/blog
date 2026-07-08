@@ -1,0 +1,51 @@
+name: deploy-api
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - '.github/workflows/deploy-api.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: install deps
+        run: bun install
+        working-directory: apps/api
+
+      - name: run tests
+        run: bun test
+        working-directory: apps/api
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: deploy to Cloud Run
+        run: |
+          gcloud run deploy garden-api \
+            --source apps/api \
+            --project webpolibrasil \
+            --region us-east1 \
+            --allow-unauthenticated \
+            --set-env-vars "TURSO_URL=${TURSO_URL},ALLOWED_ORIGIN=${ALLOWED_ORIGIN}" \
+            --set-secrets "TURSO_TOKEN=turso-token:latest"
+        env:
+          TURSO_URL: ${{ secrets.TURSO_URL }}
+          ALLOWED_ORIGIN: ${{ secrets.ALLOWED_ORIGIN }}
