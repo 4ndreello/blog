@@ -9,17 +9,16 @@ export async function getCount(db: Client, slug: string): Promise<number> {
   return rs.rows.length ? Number(rs.rows[0].count) : 0;
 }
 
-// dedup-insert the event; increment total only if the visitor is new today.
+// dedup-insert the event; increment total only if this visitor has not been seen before.
 // returns the current total after the operation.
 export async function recordView(
   db: Client,
   slug: string,
   visitor: string,
-  day: string,
 ): Promise<number> {
   const ins = await db.execute({
-    sql: "INSERT OR IGNORE INTO view_events (slug, visitor, day) VALUES (?, ?, ?)",
-    args: [slug, visitor, day],
+    sql: "INSERT OR IGNORE INTO view_events (slug, visitor) VALUES (?, ?)",
+    args: [slug, visitor],
   });
   if (ins.rowsAffected > 0) {
     await db.execute({

@@ -1,5 +1,5 @@
 import { expect, test, describe } from "bun:test";
-import { visitorHash, isValidSlug, utcDay } from "./visitor";
+import { visitorHash, isValidSlug } from "./visitor";
 import { makeClient, applySchema } from "./db";
 import { getCount, recordView } from "./views";
 
@@ -14,24 +14,13 @@ describe("isValidSlug", () => {
   });
 });
 
-describe("utcDay", () => {
-  test("formats YYYY-MM-DD in UTC", () => {
-    expect(utcDay(new Date("2026-07-07T23:30:00Z"))).toBe("2026-07-07");
-  });
-});
-
 describe("visitorHash", () => {
   test("is deterministic and hides raw ip", async () => {
-    const a = await visitorHash("1.2.3.4", "UA", "2026-07-07");
-    const b = await visitorHash("1.2.3.4", "UA", "2026-07-07");
+    const a = await visitorHash("1.2.3.4", "UA");
+    const b = await visitorHash("1.2.3.4", "UA");
     expect(a).toBe(b);
     expect(a).not.toContain("1.2.3.4");
     expect(a).toHaveLength(64); // sha256 hex
-  });
-  test("differs across day", async () => {
-    const a = await visitorHash("1.2.3.4", "UA", "2026-07-07");
-    const b = await visitorHash("1.2.3.4", "UA", "2026-07-08");
-    expect(a).not.toBe(b);
   });
 });
 
@@ -44,29 +33,31 @@ async function freshDb() {
 describe("recordView / getCount", () => {
   test("first view increments to 1", async () => {
     const db = await freshDb();
-    const n = await recordView(db, "note-a", "v1", "2026-07-07");
+    const n = await recordView(db, "note-a", "v1");
     expect(n).toBe(1);
     expect(await getCount(db, "note-a")).toBe(1);
   });
 
-  test("same visitor same day does not double count", async () => {
+  test("same visitor does not double count", async () => {
     const db = await freshDb();
-    await recordView(db, "note-a", "v1", "2026-07-07");
-    const n = await recordView(db, "note-a", "v1", "2026-07-07");
+    await recordView(db, "note-a", "v1");
+    const n = await recordView(db, "note-a", "v1");
     expect(n).toBe(1);
   });
 
-  test("same visitor next day counts again", async () => {
+  test("same visitor on a different slug counts separately", async () => {
     const db = await freshDb();
-    await recordView(db, "note-a", "v1", "2026-07-07");
-    const n = await recordView(db, "note-a", "v1", "2026-07-08");
-    expect(n).toBe(2);
+    await recordView(db, "note-a", "v1");
+    const n = await recordView(db, "note-b", "v1");
+    expect(n).toBe(1);
+    expect(await getCount(db, "note-a")).toBe(1);
+    expect(await getCount(db, "note-b")).toBe(1);
   });
 
   test("different visitors both count", async () => {
     const db = await freshDb();
-    await recordView(db, "note-a", "v1", "2026-07-07");
-    const n = await recordView(db, "note-a", "v2", "2026-07-07");
+    await recordView(db, "note-a", "v1");
+    const n = await recordView(db, "note-a", "v2");
     expect(n).toBe(2);
   });
 
