@@ -9,6 +9,9 @@ posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
 <Layout title="Fragmentos">
   <main class="container">
+    <nav class="back-nav">
+      <a href="/">← início</a>
+    </nav>
     <header class="page-header">
       <h1 class="page-title">Fragmentos</h1>
       <p class="page-description">
@@ -31,6 +34,21 @@ posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
     max-width: 42rem;
     margin: 0 auto;
     padding: 6.5rem var(--space-4) var(--space-16);
+  }
+
+  .back-nav {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    margin-bottom: var(--space-8);
+  }
+
+  .back-nav a {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+  }
+
+  .back-nav a:hover {
+    color: var(--color-text);
   }
 
   .page-header {

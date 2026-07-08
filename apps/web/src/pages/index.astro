@@ -1,5 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import GardenCard from '../components/GardenCard.astro';
+
+const posts = await getCollection('garden');
+posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+const recent = posts.slice(0, 3);
 ---
 
 <Layout title="Andreello — Fragmentos">
@@ -28,8 +34,14 @@ import Layout from '../layouts/Layout.astro';
       </p>
     </section>
 
+    {recent.length > 0 && (
+      <section class="recent" aria-label="Fragmentos recentes">
+        {recent.map((post) => <GardenCard post={post} />)}
+      </section>
+    )}
+
     <nav class="actions">
-      <a href="/fragmentos/" class="primary-action">explorar os fragmentos →</a>
+      <a href="/fragmentos/" class="primary-action">ver todos os fragmentos →</a>
     </nav>
   </main>
 </Layout>
@@ -198,6 +210,16 @@ import Layout from '../layouts/Layout.astro';
 
   .intro em {
     font-style: italic;
+  }
+
+  .recent {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: var(--space-8);
+  }
+
+  .recent > :global(.entry:last-child) {
+    border-bottom: 1px solid var(--color-border);
   }
 
   .actions {
