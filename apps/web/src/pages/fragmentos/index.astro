@@ -16,13 +16,13 @@ posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
       </p>
     </header>
 
-    <section class="post-list" aria-label="Lista de notas">
+    <section class="post-list" aria-label="Lista de fragmentos">
       {posts.map((post) => (
         <GardenCard post={post} />
       ))}
     </section>
 
-    <footer class="page-footer">{posts.length} notas</footer>
+    <footer class="page-footer">{posts.length} fragmentos</footer>
   </main>
 </Layout>
 
