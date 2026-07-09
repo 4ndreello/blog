@@ -1,11 +1,11 @@
-# meu jardim digital
+# meu blog
 
-Este repositório é o meu blog pessoal — um "digital garden" em português (pt-BR) onde publico notas sobre desenvolvimento, tecnologia e outras coisas que estou explorando.
+Este repositório é o meu blog pessoal em português (pt-BR), onde publico posts sobre desenvolvimento, tecnologia e outras coisas que estou explorando.
 
 Ele é um monorepo simples gerenciado com `pnpm`, com duas aplicações independentes que conversam entre si:
 
 - **`apps/web`**: o site em si, feito com [Astro](https://astro.build/) e gerado como site estático.
-- **`apps/api`**: uma API pequena em [Bun](https://bun.sh/) + [Hono](https://hono.dev/) que conta visualizações de cada nota.
+- **`apps/api`**: uma API pequena em [Bun](https://bun.sh/) + [Hono](https://hono.dev/) que conta visualizações de cada post.
 
 ## Estrutura
 
@@ -32,7 +32,7 @@ Ele é um monorepo simples gerenciado com `pnpm`, com duas aplicações independ
 
 ## Como funciona a separação
 
-O site é 100% estático. Quando alguém abre uma nota, o componente `ViewCount` faz uma requisição do navegador para a API (`POST /views/:slug`) e exibe o número de visualizações. A API armazena o total no Turso (libSQL) e conta cada visitante (IP + User-Agent) apenas uma vez por nota.
+O site é 100% estático. Quando alguém abre um post, o componente `ViewCount` faz uma requisição do navegador para a API (`POST /views/:slug`) e exibe o número de visualizações. A API armazena o total no Turso (libSQL) e conta cada visitante (IP + User-Agent) apenas uma vez por post.
 
 A API roda em Cloud Run e o site fica hospedado no Cloudflare R2. O `ALLOWED_ORIGIN` da API precisa bater exatamente com a origem pública do site, senão o browser bloqueia por CORS.
 
