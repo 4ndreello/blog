@@ -1,7 +1,20 @@
 ---
 title: "cache, cinco visões sobre"
 pubDate: 2026-07-08
-tags: [cache, cache-aside, read-through, write-through, write-behind, write-around, performance, backend, arquitetura-de-software, banco-de-dados, consistencia]
+tags:
+  [
+    cache,
+    cache-aside,
+    read-through,
+    write-through,
+    write-behind,
+    write-around,
+    performance,
+    backend,
+    arquitetura-de-software,
+    banco-de-dados,
+    consistencia,
+  ]
 ---
 
 <svg width="100%" viewBox="0 0 700 420" role="img" aria-label="Diagrama do fluxo cache-aside">
@@ -43,15 +56,15 @@ tags: [cache, cache-aside, read-through, write-through, write-behind, write-arou
 <text x="350" y="410" text-anchor="middle" font-size="12" fill="#888780">linha cheia = leitura, tracejada = escrita</text>
 </svg>
 
-*fluxo do cache-aside: a app comanda tudo, lê o cache, se não tem vai no banco, popula, e na escrita invalida.*
+_fluxo do cache-aside: a app comanda tudo, lê o cache, se não tem vai no banco, popula, e na escrita invalida._
 
 tem uns 5 jeitos de organizar cache e todo mundo reinventa os mesmos nomes.
 
-**cache-aside**, a app cuida de tudo. lê: olha o cache, se não tem vai no banco e guarda. escreve: manda pro banco e invalida o cache. simples, funciona, é o padrão default na cabeça de qualquer um.
+**cache-aside**, a app cuida de tudo. lê: olha o cache, se não tem vai no banco e guarda. escreve: manda pro banco e invalida o cache. simples, funciona, é o padrão na cabeça de qualquer um.
 
 **read-through**, igual ao aside, só que quem sabe buscar no banco é o próprio cache, não a app. a app nem sabe que existe banco. tipo um proxy.
 
-**write-through**, escreve no cache, o cache propaga pro banco *na hora*, só confirma depois que salvou os dois. seguro, mas mais lento pra escrever.
+**write-through**, escreve no cache, o cache propaga pro banco _na hora_, só confirma depois que salvou os dois. seguro, mas mais lento pra escrever.
 
 **write-behind (write-back)**, escreve no cache, confirma na hora, manda pro banco depois em background. rápido, mas se o cache cair no meio do caminho, perdeu dado.
 
