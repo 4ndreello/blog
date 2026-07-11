@@ -5,7 +5,7 @@ tags:
   [
     agregador,
     ia,
-    gemini,
+    agente-ia,
     rss,
     react,
     hacker-news,
@@ -32,7 +32,7 @@ tags:
 <text x="350" y="64" text-anchor="middle" font-size="12" fill="#993C1D">score na hora</text>
 
 <rect x="270" y="150" width="160" height="60" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
-<text x="350" y="176" text-anchor="middle" font-size="14" font-weight="500" fill="#04342C">gemini</text>
+<text x="350" y="176" text-anchor="middle" font-size="14" font-weight="500" fill="#04342C">agente ia</text>
 <text x="350" y="194" text-anchor="middle" font-size="12" fill="#0F6E56">score 0-100, background</text>
 
 <rect x="510" y="85" width="160" height="60" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
@@ -70,13 +70,13 @@ tags:
 <text x="350" y="450" text-anchor="middle" font-size="12" fill="#888780">linha cheia = fluxo de score, tracejada = descarte</text>
 </svg>
 
-_item entra, keyword da nota na hora, gemini reclassifica em background e sobrescreve, cache guarda por 24h, só passa quem tira 61 ou mais._
+_item entra, keyword da nota na hora, agente ia reclassifica em background e sobrescreve, cache guarda por 24h, só passa quem tira 61 ou mais._
 
 cansei de abrir 5 aba pra saber o que rolou no dia: hacker news, tabnews, dev.to, lobsters, twitter. cada um com layout diferente, cada um querendo prender atenção. fiz um agregador que junta tudo numa lista só, e delego pra IA a parte chata: decidir o que é relevante.
 
-**score de relevância via gemini**, cada item novo passa pelo `gemini-2.0-flash-lite` com um prompt curto: título + corpo, devolve nota de 0 a 100 de quão "tech" aquilo é. sem isso, timeline de agregador vira lixo genérico: post de dieta no hacker news, thread política no lobsters.
+**score de relevância via agente ia**, cada item novo passa por um agente de IA com um prompt curto: título + corpo, devolve nota de 0 a 100 de quão "tech" aquilo é. sem isso, timeline de agregador vira lixo genérico: post de dieta no hacker news, thread política no lobsters.
 
-**fallback por keyword**, enquanto o gemini não classificou (ou se a chamada falha), uma lista de ~100 termos (`typescript`, `docker`, `kubernetes`, `llm` etc) estima o score contando ocorrência no texto. rústico, mas mantém o feed usável sem esperar a IA responder.
+**fallback por keyword**, enquanto o agente não classificou (ou se a chamada falha), uma lista de ~100 termos (`typescript`, `docker`, `kubernetes`, `llm` etc) estima o score contando ocorrência no texto. rústico, mas mantém o feed usável sem esperar a IA responder.
 
 **scoring em background**, a classificação real roda assíncrona depois que o item já apareceu com o score do keyword-fallback. resultado fica em cache por 24h, não reclassifico o mesmo post a cada request.
 
