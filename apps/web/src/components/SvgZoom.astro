@@ -1,5 +1,5 @@
 ---
-// lightweight svg zoom/pan overlay for inline diagrams inside .prose
+// lightweight zoom/pan overlay for inline svg diagrams and images inside .prose
 ---
 
 <script>
@@ -10,7 +10,7 @@
     // state per open overlay
     let overlay: HTMLDivElement | null = null;
     let stage: HTMLDivElement | null = null;
-    let svgClone: SVGSVGElement | null = null;
+    let svgClone: SVGSVGElement | HTMLImageElement | null = null;
     let scale = 1;
     let translateX = 0;
     let translateY = 0;
@@ -75,8 +75,11 @@
       document.body.style.overflow = "";
     }
 
-    function createOverlay(originalSvg: SVGSVGElement) {
-      const ariaLabel = originalSvg.getAttribute("aria-label") || "diagrama ampliado";
+    function createOverlay(original: SVGSVGElement | HTMLImageElement) {
+      const isImg = original instanceof HTMLImageElement;
+      const ariaLabel = isImg
+        ? (original as HTMLImageElement).alt || "imagem ampliada"
+        : original.getAttribute("aria-label") || "diagrama ampliado";
 
       overlay = document.createElement("div");
       overlay.className = "svg-zoom-overlay";
@@ -101,11 +104,13 @@
       stage = document.createElement("div");
       stage.className = "svg-zoom-stage";
 
-      svgClone = originalSvg.cloneNode(true) as SVGSVGElement;
+      svgClone = original.cloneNode(true) as SVGSVGElement | HTMLImageElement;
       svgClone.classList.add("svg-zoom-svg");
-      svgClone.removeAttribute("width");
-      svgClone.removeAttribute("height");
-      svgClone.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      if (!isImg) {
+        (svgClone as SVGSVGElement).removeAttribute("width");
+        (svgClone as SVGSVGElement).removeAttribute("height");
+        (svgClone as SVGSVGElement).setAttribute("preserveAspectRatio", "xMidYMid meet");
+      }
 
       stage.appendChild(svgClone);
       overlay.appendChild(backdrop);
@@ -206,11 +211,11 @@
 
     function delegateProseClick(event: MouseEvent) {
       const target = event.target as HTMLElement;
-      const svg = target.closest<SVGSVGElement>("svg");
-      if (!svg || !svg.closest(proseSelector)) return;
-      if (svg.closest(".svg-zoom-overlay")) return;
+      const zoomable = target.closest<SVGSVGElement | HTMLImageElement>("svg, img");
+      if (!zoomable || !zoomable.closest(proseSelector)) return;
+      if (zoomable.closest(".svg-zoom-overlay")) return;
       event.preventDefault();
-      createOverlay(svg);
+      createOverlay(zoomable);
     }
 
     function onOverlayPointerDown(event: PointerEvent) {
@@ -262,12 +267,13 @@
 </script>
 
 <style is:global>
-  .prose svg {
+  .prose svg,
+  .prose img {
     cursor: zoom-in;
     max-width: 100%;
     height: auto;
     display: block;
-    margin: var(--space-6) 0;
+    margin: var(--space-6) auto;
   }
 
   .svg-zoom-overlay {
