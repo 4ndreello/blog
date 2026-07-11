@@ -21,7 +21,7 @@ cansei de abrir várias aba pra saber o que rolou no dia: hacker news, tabnews, 
 
 ![feed do agregador misturando as fontes](/images/agregador/feed-mix.png)
 
-**status dos serviços**, também tinha o hábito de abrir status page da aws, gcp, cloudflare, github, vercel separado, só pra saber se algum problema que eu tava vendo era eu ou era o mundo caindo. juntei isso no mesmo painel do agregador, do lado das fontes do feed. um lugar só pra saber "tá tudo operacional" ou "não, o problema não é meu código".
+**status dos serviços**, quando algo dava errado eu ia direto no twitter tentar achar alguém reclamando, em vez de abrir a status page da aws, gcp, cloudflare, github, vercel de cada um. juntei isso no mesmo painel do agregador, do lado das fontes do feed. um lugar só pra saber "tá tudo operacional" ou "não, o problema não é meu código".
 
 ![painel de fontes do feed e status dos serviços](/images/agregador/status-fontes.png)
 
